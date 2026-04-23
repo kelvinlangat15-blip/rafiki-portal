@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>RAFIKI JUNIOR SCHOOL · Secure Account Portal</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+    }
+    body {
+      background: linear-gradient(145deg, #072a40 0%, #0f4b66 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      margin: 0;
+    }
+    .portal-container {
+      width: 100%;
+      max-width: 520px;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(16px);
+      border-radius: 40px;
+      padding: 40px 30px;
+      box-shadow: 0 35px 70px rgba(0,0,0,0.45);
+      transition: all 0.2s ease;
+    }
+    .logo-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+    .school-icon {
+      background: linear-gradient(135deg, #0b3b5e, #1b6b8f);
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.3rem;
+      box-shadow: 0 18px 30px rgba(11,59,94,0.5);
+      border: 4px solid white;
+      margin-bottom: 15px;
+    }
+    h2 {
+      color: #0b3b5e;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      font-size: 2rem;
+      text-align: center;
+    }
+    .subhead {
+      color: #1e5370;
+      font-weight: 600;
+      margin-bottom: 25px;
+      font-size: 1rem;
+      text-align: center;
+    }
+    .tabs {
+      display: flex;
+      gap: 5px;
+      background: #e9f0f5;
+      border-radius: 40px;
+      padding: 6px;
+      margin-bottom: 28px;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px 10px;
+      border-radius: 30px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+      color: #1b6b8f;
+      background: transparent;
+      border: none;
+      font-size: 0.95rem;
+    }
+    .tab.active {
+      background: white;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+      color: #0b3b5e;
+      font-weight: 800;
+    }
+    .form-panel {
+      display: none;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .form-panel.active {
+      display: flex;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    label {
+      font-weight: 700;
+      color: #0b3b5e;
+      font-size: 0.9rem;
+      margin-left: 6px;
+    }
+    input, select {
+      padding: 14px 18px;
+      border: 2px solid #dce5ec;
+      border-radius: 24px;
+      font-size: 1rem;
+      outline: none;
+      background: white;
+      transition: 0.2s;
+    }
+    input:focus, select:focus {
+      border-color: #1b6b8f;
+      box-shadow: 0 0 0 4px rgba(27,107,143,0.2);
+    }
+    .btn {
+      background: #1b6b8f;
+      color: white;
+      border: none;
+      padding: 15px 25px;
+      border-radius: 34px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-top: 10px;
+      box-shadow: 0 8px 18px rgba(27,107,143,0.35);
+      text-align: center;
+      letter-spacing: 0.4px;
+    }
+    .btn-outline {
+      background: white;
+      color: #1b6b8f;
+      border: 2px solid #1b6b8f;
+      box-shadow: none;
+    }
+    .btn:hover {
+      background: #0e4e6b;
+      transform: translateY(-2px);
+    }
+    .btn-outline:hover {
+      background: #e6f2f9;
+    }
+    .message {
+      padding: 12px 18px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin: 8px 0;
+      display: none;
+      text-align: center;
+    }
+    .error-message {
+      background: #ffebee;
+      color: #b71c1c;
+      border-left: 5px solid #c62828;
+    }
+    .success-message {
+      background: #e8f5e9;
+      color: #1b5e20;
+      border-left: 5px solid #2e7d32;
+    }
+    .info-banner {
+      background: #e3f2fd;
+      border-radius: 20px;
+      padding: 14px;
+      color: #0b3b5e;
+      font-weight: 500;
+      margin: 15px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .copy-link-area {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .copy-link-area input {
+      flex: 1;
+      background: #f5f9fd;
+      font-weight: 500;
+      color: #0b3b5e;
+      border: 1px solid #b8d1e0;
+    }
+    .small-btn {
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: 700;
+      background: #2e7a9c;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    hr {
+      margin: 20px 0 10px;
+      border: 1px solid #d0dee8;
+    }
+    .approval-badge {
+      background: #ffcc80;
+      color: #994400;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+<div class="portal-container" id="portalBox">
+  <div class="logo-section">
+    <div class="school-icon">📚🎓</div>
+    <h2>RAFIKI JUNIOR SCHOOL</h2>
+    <div class="subhead">Secure Account Portal · Admin Approval Required</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tabCreateAccount">➕ Create Account</button>
+    <button class="tab" id="tabLogin">🔐 Sign In</button>
+    <button class="tab" id="tabAdminApproval">👑 Admin Panel</button>
+  </div>
+
+  <!-- CREATE ACCOUNT PANEL -->
+  <div class="form-panel active" id="panelCreate">
+    <div class="input-group">
+      <label>👤 Full Name</label>
+      <input type="text" id="createName" placeholder="e.g., Mary Wanjiku" autocomplete="off">
+    </div>
+    <div class="input-group">
+      <label>📧 Email Address</label>
+      <input type="email" id="createEmail" placeholder="teacher@rafiki.ac.ke" autocomplete="off">
+    </div>
+    <div class="input-group">
+      <label>🔒 Choose Password</label>
+      <input type="password" id="createPassword" placeholder="Min. 6 characters">
+    </div>
+    <div class="input-group">
+      <label>🎓 Desired Subject / Role</label>
+      <input type="text" id="createSubject" placeholder="e.g., Mathematics, English...">
+    </div>
+    <button class="btn" id="createAccountBtn">📝 Request Account (Await Approval)</button>
+    <div id="createMessage" class="message"></div>
+    <div class="info-banner" style="margin-top: 12px;">
+      <span>⏳</span> All accounts must be approved by the administrator. You will receive confirmation.
+    </div>
+  </div>
+
+  <!-- LOGIN PANEL (For already approved users) -->
+  <div class="form-panel" id="panelLogin">
+    <div class="input-group">
+      <label>📧 Registered Email</label>
+      <input type="email" id="loginEmail" placeholder="your@email.com">
+    </div>
+    <div class="input-group">
+      <label>🔑 Password</label>
+      <input type="password" id="loginPassword" placeholder="Enter password">
+    </div>
+    <button class="btn" id="loginBtn">🚪 Access My Dashboard</button>
+    <div id="loginMessage" class="message"></div>
+    <div class="info-banner" style="margin-top: 12px;">
+      <span>🔐</span> Only approved & active accounts can log in. Accounts expire after 1 year.
+    </div>
+  </div>
+
+  <!-- ADMIN APPROVAL PANEL (hidden, protected by master key) -->
+  <div class="form-panel" id="panelAdmin">
+    <div class="input-group">
+      <label>🔐 Admin Master Key</label>
+      <input type="password" id="adminKey" placeholder="Enter admin secret key">
+    </div>
+    <button class="btn" id="adminLoginBtn">🔓 Unlock Admin Panel</button>
+    <div id="adminMessage" class="message"></div>
+    
+    <div id="adminDashboard" style="display: none; margin-top: 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h4 style="color:#0b3b5e;">📋 Pending Accounts</h4>
+        <span class="approval-badge" id="pendingCount">0 pending</span>
+      </div>
+      <div id="pendingList" style="max-height: 320px; overflow-y: auto; margin: 15px 0; background: #f9fcff; border-radius: 20px; padding: 8px;">
+        <p style="color:#7a9bb5; text-align:center;">No pending requests.</p>
+      </div>
+      <hr>
+      <div style="margin-top: 12px;">
+        <p style="font-weight: 600; color:#0b3b5e;">📎 Shareable Registration Link (for new teachers)</p>
+        <div class="copy-link-area">
+          <input type="text" id="registrationLink" readonly value="https://yourapp.com/create-account">
+          <button class="small-btn" id="copyLinkBtn">📋 Copy</button>
+        </div>
+        <p style="font-size:0.8rem; color:#5f7d94; margin-top: 6px;">Share this link – anyone can request an account, but you must approve it.</p>
+      </div>
+      <button class="btn-outline btn" style="width:100%; margin-top:20px;" id="logoutAdminBtn">🚪 Close Admin Panel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ---------- STORAGE KEYS ----------
+    const STORAGE_USERS = 'rafiki_portal_users';
+    const STORAGE_APPROVED = 'rafiki_portal_approved';
+    const ADMIN_MASTER_KEY = 'RafikiAdmin2026!'; // Change in production
+    const ACCOUNT_EXPIRY_DAYS = 365; // 1 year
+
+    // ---------- USER STRUCTURE ----------
+    // users: { email: { name, email, password, subject, createdAt, status: 'pending'|'approved', approvedAt } }
+    // approved list also kept separately for quick lookup
+
+    function getUsers() {
+      const stored = localStorage.getItem(STORAGE_USERS);
+      return stored ? JSON.parse(stored) : {};
+    }
+
+    function saveUsers(users) {
+      localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
+    }
+
+    function getApprovedEmails() {
+      const stored = localStorage.getItem(STORAGE_APPROVED);
+      return stored ? JSON.parse(stored) : [];
+    }
+
+    function saveApprovedEmails(list) {
+      localStorage.setItem(STORAGE_APPROVED, JSON.stringify(list));
+    }
+
+    // Check if account is expired (1 year from approval)
+    function isAccountExpired(user) {
+      if (!user.approvedAt || user.status !== 'approved') return false;
+      const expiryDate = new Date(user.approvedAt);
+      expiryDate.setDate(expiryDate.getDate() + ACCOUNT_EXPIRY_DAYS);
+      return new Date() > expiryDate;
+    }
+
+    // Clean expired accounts from approved list
+    function cleanExpiredApprovals() {
+      const users = getUsers();
+      let changed = false;
+      for (let email in users) {
+        if (users[email].status === 'approved' && isAccountExpired(users[email])) {
+          users[email].status = 'expired';
+          changed = true;
+        }
+      }
+      if (changed) {
+        saveUsers(users);
+        // rebuild approved list
+        const newApproved = Object.values(users)
+          .filter(u => u.status === 'approved' && !isAccountExpired(u))
+          .map(u => u.email);
+        saveApprovedEmails(newApproved);
+      }
+    }
+
+    // ---------- UI HELPERS ----------
+    function showMessage(elementId, text, isSuccess = false) {
+      const el = document.getElementById(elementId);
+      el.textContent = text;
+      el.className = `message ${isSuccess ? 'success-message' : 'error-message'}`;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      if (tabId === 'tabCreateAccount') document.getElementById('panelCreate').classList.add('active');
+      if (tabId === 'tabLogin') document.getElementById('panelLogin').classList.add('active');
+      if (tabId === 'tabAdminApproval') document.getElementById('panelAdmin').classList.add('active');
+    }
+
+    // ---------- CREATE ACCOUNT ----------
+    document.getElementById('createAccountBtn').addEventListener('click', function() {
+      const name = document.getElementById('createName').value.trim();
+      const email = document.getElementById('createEmail').value.trim().toLowerCase();
+      const password = document.getElementById('createPassword').value;
+      const subject = document.getElementById('createSubject').value.trim();
+
+      if (!name || !email || !password || !subject) {
+        return showMessage('createMessage', '❌ All fields are required.', false);
+      }
+      if (password.length < 6) {
+        return showMessage('createMessage', 'Password must be at least 6 characters.', false);
+      }
+      if (!email.includes('@') || !email.includes('.')) {
+        return showMessage('createMessage', 'Please enter a valid email address.', false);
+      }
+
+      const users = getUsers();
+      if (users[email]) {
+        return showMessage('createMessage', '⚠️ An account with this email already exists.', false);
+      }
+
+      // Create pending user
+      users[email] = {
+        name,
+        email,
+        password, // In production, hash this!
+        subject,
+        createdAt: new Date().toISOString(),
+        status: 'pending',
+        approvedAt: null
+      };
+      saveUsers(users);
+      
+      // Clear fields
+      document.getElementById('createName').value = '';
+      document.getElementById('createEmail').value = '';
+      document.getElementById('createPassword').value = '';
+      document.getElementById('createSubject').value = '';
+      
+      showMessage('createMessage', '✅ Account request submitted! Admin will review shortly.', true);
+    });
+
+    // ---------- LOGIN (Approved users) ----------
+    document.getElementById('loginBtn').addEventListener('click', function() {
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const password = document.getElementById('loginPassword').value;
+
+      if (!email || !password) {
+        return showMessage('loginMessage', 'Enter email and password.', false);
+      }
+
+      cleanExpiredApprovals(); // maintenance
+      const users = getUsers();
+      const user = users[email];
+
+      if (!user) {
+        return showMessage('loginMessage', '❌ Account not found.', false);
+      }
+      if (user.status !== 'approved') {
+        return showMessage('loginMessage', '⏳ Your account is pending approval or has expired.', false);
+      }
+      if (isAccountExpired(user)) {
+        user.status = 'expired';
+        saveUsers(users);
+        return showMessage('loginMessage', '⌛ Account expired. Contact admin for renewal.', false);
+      }
+      if (user.password !== password) {
+        return showMessage('loginMessage', '❌ Incorrect password.', false);
+      }
+
+      // SUCCESS - Store session and redirect to main program (REMS9.html)
+      sessionStorage.setItem('rafiki_current_user', JSON.stringify({
+        name: user.name,
+        email: user.email,
+        subject: user.subject,
+        loginTime: new Date().toISOString()
+      }));
+      
+      showMessage('loginMessage', '✅ Login successful! Redirecting...', true);
+      setTimeout(() => {
+        // Redirect to the main examination system (the file you uploaded)
+        // Assuming REMS9.html is in the same directory.
+        window.location.href = 'REMS9.html';
+      }, 1200);
+    });
+
+    // ---------- ADMIN PANEL ----------
+    let adminUnlocked = false;
+
+    document.getElementById('adminLoginBtn').addEventListener('click', function() {
+      const key = document.getElementById('adminKey').value;
+      if (key === ADMIN_MASTER_KEY) {
+        adminUnlocked = true;
+        document.getElementById('adminDashboard').style.display = 'block';
+        document.getElementById('adminMessage').style.display = 'none';
+        document.getElementById('adminKey').value = '';
+        renderPendingList();
+        updateRegistrationLink();
+      } else {
+        showMessage('adminMessage', '❌ Invalid admin key.', false);
+      }
+    });
+
+    document.getElementById('logoutAdminBtn').addEventListener('click', function() {
+      adminUnlocked = false;
+      document.getElementById('adminDashboard').style.display = 'none';
+      document.getElementById('adminKey').value = '';
+      document.getElementById('adminMessage').style.display = 'none';
+    });
+
+    function renderPendingList() {
+      if (!adminUnlocked) return;
+      cleanExpiredApprovals();
+      const users = getUsers();
+      const pendingUsers = Object.values(users).filter(u => u.status === 'pending');
+      const container = document.getElementById('pendingList');
+      document.getElementById('pendingCount').textContent = `${pendingUsers.length} pending`;
+
+      if (pendingUsers.length === 0) {
+        container.innerHTML = '<p style="color:#7a9bb5; text-align:center; padding:20px;">✅ No pending requests.</p>';
+        return;
+      }
+
+      let html = '';
+      pendingUsers.forEach(user => {
+        html += `
+          <div style="background:white; border-radius:18px; padding:14px; margin-bottom:10px; box-shadow:0 3px 10px rgba(0,0,0,0.03); display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong>${user.name}</strong><br>
+              <small>📧 ${user.email}</small> · <small>📚 ${user.subject}</small><br>
+              <small style="color:#5f7d94;">Requested: ${new Date(user.createdAt).toLocaleDateString()}</small>
+            </div>
+            <button class="small-btn" style="background:#2e7d32;" data-approve="${user.email}">✅ Approve</button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+
+      // Attach approve events
+      document.querySelectorAll('[data-approve]').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          const email = this.getAttribute('data-approve');
+          approveUser(email);
+        });
+      });
+    }
+
+    function approveUser(email) {
+      const users = getUsers();
+      if (users[email] && users[email].status === 'pending') {
+        users[email].status = 'approved';
+        users[email].approvedAt = new Date().toISOString();
+        saveUsers(users);
+        
+        const approvedList = getApprovedEmails();
+        if (!approvedList.includes(email)) {
+          approvedList.push(email);
+          saveApprovedEmails(approvedList);
+        }
+        renderPendingList();
+        alert(`✅ ${users[email].name} has been approved! They can now log in.`);
+      }
+    }
+
+    function updateRegistrationLink() {
+      // Generate a shareable link based on current URL (pointing to this portal)
+      const currentUrl = window.location.href.split('?')[0];
+      document.getElementById('registrationLink').value = currentUrl;
+    }
+
+    document.getElementById('copyLinkBtn').addEventListener('click', function() {
+      const linkInput = document.getElementById('registrationLink');
+      linkInput.select();
+      document.execCommand('copy');
+      alert('📋 Registration link copied! Share it with teachers.');
+    });
+
+    // Tab navigation
+    document.getElementById('tabCreateAccount').addEventListener('click', () => switchTab('tabCreateAccount'));
+    document.getElementById('tabLogin').addEventListener('click', () => switchTab('tabLogin'));
+    document.getElementById('tabAdminApproval').addEventListener('click', () => switchTab('tabAdminApproval'));
+
+    // Initial cleanup
+    cleanExpiredApprovals();
+    updateRegistrationLink();
+
+    // If user already logged in via session (from previous login), redirect them automatically to main app
+    const currentSession = sessionStorage.getItem('rafiki_current_user');
+    if (currentSession) {
+      try {
+        const sessionData = JSON.parse(currentSession);
+        if (sessionData.email) {
+          document.getElementById('panelLogin').querySelector('.info-banner').innerHTML = 
+            '✅ You are already logged in. Redirecting to dashboard...';
+          setTimeout(() => {
+            window.location.href = 'REMS9.html';
+          }, 800);
+        }
+      } catch (e) {}
+    }
+  })();
+</script>
+</body>
+</html>

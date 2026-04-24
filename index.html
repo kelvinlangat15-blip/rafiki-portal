@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>RAFIKI JUNIOR SCHOOL · Secure Portal</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, system-ui, sans-serif; }
+    body {
+      background: linear-gradient(145deg, #072a40 0%, #0f4b66 100%);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; margin: 0;
+    }
+    .portal-container {
+      width: 100%; max-width: 520px; background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(16px); border-radius: 40px; padding: 40px 30px;
+      box-shadow: 0 35px 70px rgba(0,0,0,0.45); transition: all 0.2s ease;
+    }
+    .logo-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 25px; }
+    .school-icon {
+      background: linear-gradient(135deg, #0b3b5e, #1b6b8f); width: 100px; height: 100px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 3.3rem; box-shadow: 0 18px 30px rgba(11,59,94,0.5);
+      border: 4px solid white; margin-bottom: 15px; color: white;
+    }
+    h2 { color: #0b3b5e; font-weight: 800; letter-spacing: 0.5px; font-size: 1.8rem; text-align: center; }
+    .subhead { color: #1e5370; font-weight: 600; margin-bottom: 25px; font-size: 1rem; text-align: center; }
+    .tabs { display: flex; gap: 5px; background: #e9f0f5; border-radius: 40px; padding: 6px; margin-bottom: 28px; }
+    .tab {
+      flex: 1; text-align: center; padding: 12px 8px; border-radius: 30px; font-weight: 700;
+      cursor: pointer; transition: 0.2s; color: #1b6b8f; background: transparent; border: none; font-size: 0.85rem;
+    }
+    .tab.active { background: white; box-shadow: 0 6px 15px rgba(0,0,0,0.08); color: #0b3b5e; font-weight: 800; }
+    .form-panel { display: none; flex-direction: column; gap: 18px; }
+    .form-panel.active { display: flex; }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    label { font-weight: 700; color: #0b3b5e; font-size: 0.9rem; margin-left: 6px; }
+    input, select { padding: 14px 18px; border: 2px solid #dce5ec; border-radius: 24px; font-size: 1rem; outline: none; background: white; }
+    input:focus, select:focus { border-color: #1b6b8f; box-shadow: 0 0 0 4px rgba(27,107,143,0.2); }
+    .btn {
+      background: #1b6b8f; color: white; border: none; padding: 15px 25px; border-radius: 34px;
+      font-weight: 700; font-size: 1.1rem; cursor: pointer; margin-top: 10px;
+      box-shadow: 0 8px 18px rgba(27,107,143,0.35); text-align: center; letter-spacing: 0.4px;
+    }
+    .btn:hover { background: #0e4e6b; transform: translateY(-2px); }
+    .btn-outline { background: white; color: #1b6b8f; border: 2px solid #1b6b8f; box-shadow: none; }
+    .btn-outline:hover { background: #e6f2f9; }
+    .btn-approve { background: #2e7d32; padding: 8px 16px; font-size: 0.85rem; }
+    .btn-reject { background: #c62828; padding: 8px 16px; font-size: 0.85rem; }
+    .btn-renew { background: #f57c00; padding: 8px 16px; font-size: 0.85rem; }
+    .btn-remove { background: #c62828; padding: 8px 16px; font-size: 0.85rem; }
+    .message {
+      padding: 12px 18px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;
+      margin: 8px 0; display: none; text-align: center;
+    }
+    .error-message { background: #ffebee; color: #b71c1c; border-left: 5px solid #c62828; }
+    .success-message { background: #e8f5e9; color: #1b5e20; border-left: 5px solid #2e7d32; }
+    .info-banner {
+      background: #e3f2fd; border-radius: 20px; padding: 14px; color: #0b3b5e;
+      font-weight: 500; margin: 15px 0; display: flex; align-items: center; gap: 12px;
+    }
+    .copy-link-area { display: flex; gap: 8px; margin-top: 10px; }
+    .copy-link-area input { flex: 1; background: #f5f9fd; font-weight: 500; color: #0b3b5e; border: 1px solid #b8d1e0; }
+    .small-btn { padding: 10px 20px; border-radius: 30px; font-weight: 700; background: #2e7a9c; color: white; border: none; cursor: pointer; }
+    hr { margin: 20px 0 10px; border: 1px solid #d0dee8; }
+    .user-card {
+      background: white; border-radius: 20px; padding: 15px; margin-bottom: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 10px;
+    }
+    .user-card .info { flex: 1; min-width: 150px; }
+    .user-card .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+    .status-pending { background: #fff3e0; color: #e65100; }
+    .status-approved { background: #e8f5e9; color: #1b5e20; }
+    .status-expired { background: #ffebee; color: #b71c1c; }
+    .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .section-title h4 { color: #0b3b5e; margin: 0; }
+  </style>
+</head>
+<body>
+<div class="portal-container">
+  <div class="logo-section">
+    <div class="school-icon">📚🎓</div>
+    <h2>RAFIKI JUNIOR SCHOOL</h2>
+    <div class="subhead">Secure Teacher Portal · Admin Approval Required</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tabCreateAccount">➕ Register</button>
+    <button class="tab" id="tabLogin">🔐 Sign In</button>
+    <button class="tab" id="tabAdmin">👑 Admin</button>
+  </div>
+
+  <!-- Register panel -->
+  <div class="form-panel active" id="panelCreate">
+    <div class="input-group"><label>👤 Full Name</label><input type="text" id="createName" placeholder="e.g., Mary Wanjiku"></div>
+    <div class="input-group"><label>📧 Email Address</label><input type="email" id="createEmail" placeholder="teacher@rafiki.ac.ke"></div>
+    <div class="input-group"><label>🔒 Password (min. 6 chars)</label><input type="password" id="createPassword" placeholder="Min. 6 characters"></div>
+    <div class="input-group"><label>📱 Phone Number</label><input type="tel" id="createPhone" placeholder="+254 7XX XXX XXX"></div>
+    <div class="input-group">
+      <label>🎓 Subject</label>
+      <select id="createSubject">
+        <option value="">-- Select --</option>
+        <option>Mathematics</option><option>English</option><option>Kiswahili</option>
+        <option>Integrated Science</option><option>Social Studies</option><option>Religious Education</option>
+        <option>Agriculture & Nutrition</option><option>Creative Arts & Sports</option><option>Pre Technical Studies</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <button class="btn" id="createAccountBtn">📝 Request Account (Await Approval)</button>
+    <div id="createMessage" class="message"></div>
+    <div class="info-banner"><span>⏳</span> Account will be reviewed by admin.</div>
+  </div>
+
+  <!-- Login panel -->
+  <div class="form-panel" id="panelLogin">
+    <div class="input-group"><label>📧 Registered Email</label><input type="email" id="loginEmail" placeholder="your@email.com"></div>
+    <div class="input-group"><label>🔑 Password</label><input type="password" id="loginPassword" placeholder="Enter password"></div>
+    <button class="btn" id="loginBtn">🚪 Access My Dashboard</button>
+    <div id="loginMessage" class="message"></div>
+    <div class="info-banner"><span>🔐</span> Only approved accounts can log in. Accounts expire after 1 year.</div>
+  </div>
+
+  <!-- Admin panel -->
+  <div class="form-panel" id="panelAdmin">
+    <div class="input-group"><label>🔑 Admin Email</label><input type="email" id="adminEmail" placeholder="admin@rafikijuniorschool.com"></div>
+    <div class="input-group"><label>🔒 Admin Password</label><input type="password" id="adminPassword" placeholder="Enter admin password"></div>
+    <button class="btn" id="adminLoginBtn">🔓 Unlock Admin Panel</button>
+    <div id="adminLoginMessage" class="message"></div>
+
+    <div id="adminDashboard" style="display:none; margin-top:18px;">
+      <div class="section-title"><h4>📋 Pending Approvals</h4><span id="pendingCount" class="status-badge status-pending">0</span></div>
+      <div id="pendingList" style="max-height:250px; overflow-y:auto; background:#f9fcff; border-radius:20px; padding:8px;"></div>
+      <hr>
+      <div class="section-title"><h4>✅ Approved Teachers</h4><span id="approvedCount" class="status-badge status-approved">0</span></div>
+      <div id="approvedList" style="max-height:200px; overflow-y:auto; background:#f9fcff; border-radius:20px; padding:8px;"></div>
+      <hr>
+      <div class="section-title"><h4>⏰ Expired Accounts</h4><span id="expiredCount" class="status-badge status-expired">0</span></div>
+      <div id="expiredList" style="max-height:200px; overflow-y:auto; background:#f9fcff; border-radius:20px; padding:8px;"></div>
+      <hr>
+      <p style="font-weight:600; color:#0b3b5e;">📎 Shareable Registration Link</p>
+      <div class="copy-link-area"><input type="text" id="registrationLink" readonly><button class="small-btn" id="copyLinkBtn">📋 Copy</button></div>
+      <button class="btn-outline btn" style="width:100%; margin-top:20px;" id="logoutAdminBtn">🚪 Close Admin Panel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBf2kov228TX747wps9zKNinus9T9CPWm8",
+    authDomain: "rafiki-junior-school.firebaseapp.com",
+    projectId: "rafiki-junior-school",
+    storageBucket: "rafiki-junior-school.firebasestorage.app",
+    messagingSenderId: "147986401377",
+    appId: "1:147986401377:web:31ed2d4f13005eac7d4220"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // ========== Constants ==========
+  const ACCOUNT_EXPIRY_DAYS = 365;
+
+  // ========== Helper: check expiry ==========
+  function isExpired(approvedAt) {
+    if (!approvedAt) return false;
+    const expiry = approvedAt.toDate();
+    expiry.setDate(expiry.getDate() + ACCOUNT_EXPIRY_DAYS);
+    return new Date() > expiry;
+  }
+
+  function showMessage(elId, text, success = false) {
+    const el = document.getElementById(elId);
+    el.textContent = text;
+    el.className = 'message ' + (success ? 'success-message' : 'error-message');
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 5000);
+  }
+
+  // ========== Tab switching ==========
+  document.getElementById('tabCreateAccount').addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tabCreateAccount').classList.add('active');
+    document.getElementById('panelCreate').classList.add('active');
+  });
+  document.getElementById('tabLogin').addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tabLogin').classList.add('active');
+    document.getElementById('panelLogin').classList.add('active');
+  });
+  document.getElementById('tabAdmin').addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tabAdmin').classList.add('active');
+    document.getElementById('panelAdmin').classList.add('active');
+  });
+
+  // ========== Registration ==========
+  document.getElementById('createAccountBtn').addEventListener('click', async () => {
+    const name = document.getElementById('createName').value.trim();
+    const email = document.getElementById('createEmail').value.trim().toLowerCase();
+    const password = document.getElementById('createPassword').value;
+    const phone = document.getElementById('createPhone').value.trim();
+    const subject = document.getElementById('createSubject').value;
+
+    if (!name || !email || !password || !subject) {
+      return showMessage('createMessage', '❌ All fields except phone are required.');
+    }
+    if (password.length < 6) {
+      return showMessage('createMessage', 'Password must be at least 6 characters.');
+    }
+    if (!email.includes('@') || !email.includes('.')) {
+      return showMessage('createMessage', 'Invalid email address.');
+    }
+
+    const btn = document.getElementById('createAccountBtn');
+    btn.disabled = true; btn.textContent = '⏳ Sending request...';
+
+    try {
+      // Create Firebase auth user (this also signs them in automatically, so we'll sign out after)
+      const userCred = await auth.createUserWithEmailAndPassword(email, password);
+      const uid = userCred.user.uid;
+
+      // Store teacher data in Firestore
+      await db.collection('teachers').doc(uid).set({
+        name, email, phone, subject,
+        status: 'pending',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        approvedAt: null
+      });
+
+      await auth.signOut(); // immediately sign out so they don't stay logged in
+      document.getElementById('createName').value = '';
+      document.getElementById('createEmail').value = '';
+      document.getElementById('createPassword').value = '';
+      document.getElementById('createPhone').value = '';
+      document.getElementById('createSubject').value = '';
+      showMessage('createMessage', '✅ Request submitted! Admin will review.', true);
+    } catch (err) {
+      console.error(err);
+      if (err.code === 'auth/email-already-in-use') {
+        showMessage('createMessage', '⚠️ This email is already registered.');
+      } else {
+        showMessage('createMessage', '❌ Error: ' + err.message);
+      }
+    } finally {
+      btn.disabled = false; btn.textContent = '📝 Request Account (Await Approval)';
+    }
+  });
+
+  // ========== Login ==========
+  document.getElementById('loginBtn').addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    const password = document.getElementById('loginPassword').value;
+
+    if (!email || !password) return showMessage('loginMessage', 'Enter email and password.');
+
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true; btn.textContent = '⏳ Checking...';
+
+    try {
+      const userCred = await auth.signInWithEmailAndPassword(email, password);
+      const uid = userCred.user.uid;
+
+      // Check teacher document
+      const doc = await db.collection('teachers').doc(uid).get();
+      if (!doc.exists) {
+        await auth.signOut();
+        btn.disabled = false; btn.textContent = '🚪 Access My Dashboard';
+        return showMessage('loginMessage', '❌ Account not found in teacher records.');
+      }
+
+      const teacherData = doc.data();
+      if (teacherData.status === 'pending') {
+        await auth.signOut();
+        btn.disabled = false; btn.textContent = '🚪 Access My Dashboard';
+        return showMessage('loginMessage', '⏳ Account pending approval.');
+      }
+
+      if (teacherData.status === 'approved') {
+        if (teacherData.approvedAt && isExpired(teacherData.approvedAt)) {
+          // Mark as expired
+          await db.collection('teachers').doc(uid).update({ status: 'expired' });
+          await auth.signOut();
+          btn.disabled = false; btn.textContent = '🚪 Access My Dashboard';
+          return showMessage('loginMessage', '⌛ Account expired. Contact admin.');
+        }
+      } else if (teacherData.status === 'expired') {
+        await auth.signOut();
+        btn.disabled = false; btn.textContent = '🚪 Access My Dashboard';
+        return showMessage('loginMessage', '⌛ Account expired.');
+      }
+
+      // Success: store session info
+      sessionStorage.setItem('rafiki_user', JSON.stringify({
+        uid, name: teacherData.name, email, subject: teacherData.subject
+      }));
+      showMessage('loginMessage', '✅ Login successful! Redirecting...', true);
+      setTimeout(() => window.location.href = 'REMS9.html', 1000);
+    } catch (err) {
+      console.error(err);
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        showMessage('loginMessage', '❌ Invalid email or password.');
+      } else {
+        showMessage('loginMessage', '❌ Error: ' + err.message);
+      }
+      btn.disabled = false; btn.textContent = '🚪 Access My Dashboard';
+    }
+  });
+
+  // ========== Admin ==========
+  let adminLoggedIn = false;
+  let currentAdminUid = null;
+
+  document.getElementById('adminLoginBtn').addEventListener('click', async () => {
+    const email = document.getElementById('adminEmail').value.trim().toLowerCase();
+    const password = document.getElementById('adminPassword').value;
+
+    if (!email || !password) return showMessage('adminLoginMessage', 'Enter admin credentials.');
+
+    const btn = document.getElementById('adminLoginBtn');
+    btn.disabled = true; btn.textContent = '⏳ Authenticating...';
+
+    try {
+      const userCred = await auth.signInWithEmailAndPassword(email, password);
+      const uid = userCred.user.uid;
+
+      // Check if this user is admin
+      const adminDoc = await db.collection('admins').where('email', '==', email).get();
+      if (adminDoc.empty) {
+        // If admins collection is empty, treat the first login as admin setup (only if this is the pre‑created admin account)
+        const adminsSnapshot = await db.collection('admins').get();
+        if (adminsSnapshot.empty && email === 'admin@rafikijuniorschool.com') {
+          await db.collection('admins').add({ email });
+          adminLoggedIn = true;
+          currentAdminUid = uid;
+          document.getElementById('adminDashboard').style.display = 'block';
+          document.getElementById('adminLoginMessage').style.display = 'none';
+          document.getElementById('adminEmail').value = '';
+          document.getElementById('adminPassword').value = '';
+          refreshAdminPanels();
+          updateRegistrationLink();
+          btn.disabled = false; btn.textContent = '🔓 Unlock Admin Panel';
+          return;
+        } else {
+          await auth.signOut();
+          showMessage('adminLoginMessage', '❌ Not authorized as admin.');
+          btn.disabled = false; btn.textContent = '🔓 Unlock Admin Panel';
+          return;
+        }
+      }
+
+      // Authorized admin
+      adminLoggedIn = true;
+      currentAdminUid = uid;
+      document.getElementById('adminDashboard').style.display = 'block';
+      document.getElementById('adminLoginMessage').style.display = 'none';
+      document.getElementById('adminEmail').value = '';
+      document.getElementById('adminPassword').value = '';
+      refreshAdminPanels();
+      updateRegistrationLink();
+    } catch (err) {
+      console.error(err);
+      showMessage('adminLoginMessage', '❌ Invalid credentials or error.');
+    } finally {
+      btn.disabled = false; btn.textContent = '🔓 Unlock Admin Panel';
+    }
+  });
+
+  document.getElementById('logoutAdminBtn').addEventListener('click', () => {
+    adminLoggedIn = false;
+    currentAdminUid = null;
+    document.getElementById('adminDashboard').style.display = 'none';
+    auth.signOut();
+  });
+
+  async function refreshAdminPanels() {
+    if (!adminLoggedIn) return;
+
+    // Get all teachers
+    const snapshot = await db.collection('teachers').get();
+    const teachers = [];
+    snapshot.forEach(doc => {
+      teachers.push({ id: doc.id, ...doc.data() });
+    });
+
+    // Update expired statuses
+    let changed = false;
+    teachers.forEach(t => {
+      if (t.status === 'approved' && t.approvedAt && isExpired(t.approvedAt)) {
+        t.status = 'expired';
+        db.collection('teachers').doc(t.id).update({ status: 'expired' });
+        changed = true;
+      }
+    });
+    if (changed) {
+      // Refresh the list after update (simple re‑read)
+      const newSnap = await db.collection('teachers').get();
+      teachers.length = 0;
+      newSnap.forEach(doc => teachers.push({ id: doc.id, ...doc.data() }));
+    }
+
+    // Pending
+    const pending = teachers.filter(t => t.status === 'pending');
+    document.getElementById('pendingCount').textContent = pending.length + ' pending';
+    let pendingHtml = pending.length === 0
+      ? '<p style="color:#7a9bb5; text-align:center; padding:20px;">✅ No pending requests.</p>'
+      : pending.map(t => `
+        <div class="user-card">
+          <div class="info">
+            <strong>${t.name}</strong><br>
+            <small>📧 ${t.email}</small> · <small>📚 ${t.subject}</small><br>
+            <small>📱 ${t.phone || 'N/A'}</small>
+          </div>
+          <div class="actions">
+            <button class="btn btn-approve" data-approve="${t.id}">✅ Approve</button>
+            <button class="btn btn-reject" data-reject="${t.id}">❌ Reject</button>
+          </div>
+        </div>
+      `).join('');
+    document.getElementById('pendingList').innerHTML = pendingHtml;
+
+    // Approved
+    const approved = teachers.filter(t => t.status === 'approved' && !(t.approvedAt && isExpired(t.approvedAt)));
+    document.getElementById('approvedCount').textContent = approved.length + ' active';
+    let approvedHtml = approved.length === 0
+      ? '<p style="color:#7a9bb5; text-align:center; padding:20px;">No approved teachers.</p>'
+      : approved.map(t => {
+          const daysLeft = t.approvedAt
+            ? Math.ceil((t.approvedAt.toDate().getTime() + ACCOUNT_EXPIRY_DAYS*86400000 - Date.now()) / 86400000)
+            : 0;
+          return `
+          <div class="user-card">
+            <div class="info">
+              <strong>${t.name}</strong> <span class="status-badge status-approved">Active</span><br>
+              <small>📧 ${t.email} · 📚 ${t.subject}</small><br>
+              <small>⏳ ${daysLeft} days remaining</small>
+            </div>
+            <div class="actions">
+              <button class="btn btn-remove" data-remove="${t.id}">🗑️ Kick Out</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    document.getElementById('approvedList').innerHTML = approvedHtml;
+
+    // Expired
+    const expired = teachers.filter(t => t.status === 'expired');
+    document.getElementById('expiredCount').textContent = expired.length + ' expired';
+    let expiredHtml = expired.length === 0
+      ? '<p style="color:#7a9bb5; text-align:center; padding:20px;">✅ No expired accounts.</p>'
+      : expired.map(t => `
+          <div class="user-card">
+            <div class="info">
+              <strong>${t.name}</strong> <span class="status-badge status-expired">Expired</span><br>
+              <small>📧 ${t.email} · 📚 ${t.subject}</small>
+            </div>
+            <div class="actions">
+              <button class="btn btn-renew" data-renew="${t.id}">🔄 Renew</button>
+              <button class="btn btn-remove" data-remove="${t.id}">🗑️ Delete</button>
+            </div>
+          </div>
+        `).join('');
+    document.getElementById('expiredList').innerHTML = expiredHtml;
+
+    // Attach events
+    document.querySelectorAll('[data-approve]').forEach(b => b.addEventListener('click', () => approveTeacher(b.dataset.approve)));
+    document.querySelectorAll('[data-reject]').forEach(b => b.addEventListener('click', () => rejectTeacher(b.dataset.reject)));
+    document.querySelectorAll('[data-renew]').forEach(b => b.addEventListener('click', () => renewTeacher(b.dataset.renew)));
+    document.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', () => removeTeacher(b.dataset.remove)));
+  }
+
+  async function approveTeacher(uid) {
+    if (!confirm('Approve this teacher?')) return;
+    await db.collection('teachers').doc(uid).update({
+      status: 'approved',
+      approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    refreshAdminPanels();
+    alert('✅ Teacher approved!');
+  }
+
+  async function rejectTeacher(uid) {
+    if (!confirm('Reject and remove this teacher?')) return;
+    // Optionally delete the auth user (we can't do that client-side easily; we'll just delete the teacher doc)
+    await db.collection('teachers').doc(uid).delete();
+    refreshAdminPanels();
+    alert('❌ Teacher rejected.');
+  }
+
+  async function renewTeacher(uid) {
+    if (!confirm('Renew this account for another year?')) return;
+    await db.collection('teachers').doc(uid).update({
+      status: 'approved',
+      approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    refreshAdminPanels();
+    alert('🔄 Account renewed!');
+  }
+
+  async function removeTeacher(uid) {
+    if (!confirm('⚠️ Permanently kick out this user? They will be deleted.')) return;
+    await db.collection('teachers').doc(uid).delete();
+    refreshAdminPanels();
+    alert('🗑️ Teacher kicked out.');
+  }
+
+  function updateRegistrationLink() {
+    document.getElementById('registrationLink').value = window.location.href.split('?')[0];
+  }
+
+  document.getElementById('copyLinkBtn').addEventListener('click', () => {
+    const inp = document.getElementById('registrationLink');
+    inp.select();
+    document.execCommand('copy');
+    alert('📋 Link copied!');
+  });
+
+  // Initial setup
+  updateRegistrationLink();
+
+  // Auto redirect if already logged in as teacher
+  const session = sessionStorage.getItem('rafiki_user');
+  if (session) {
+    try {
+      const data = JSON.parse(session);
+      if (data.uid) {
+        setTimeout(() => window.location.href = 'REMS9.html', 500);
+      }
+    } catch(e) {}
+  }
+</script>
+</body>
+</html>

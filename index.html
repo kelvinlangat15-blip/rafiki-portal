@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>RAFIKI JUNIOR SCHOOL · Secure Portal</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, system-ui, sans-serif; }
+    body { background: linear-gradient(145deg, #072a40 0%, #0f4b66 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; margin: 0; }
+    .portal-container { width: 100%; max-width: 520px; background: rgba(255,255,255,0.95); backdrop-filter: blur(16px); border-radius: 40px; padding: 40px 30px; box-shadow: 0 35px 70px rgba(0,0,0,0.45); }
+    .logo-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 25px; }
+    .school-icon { background: linear-gradient(135deg, #0b3b5e, #1b6b8f); width: 100px; height: 100px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 18px 30px rgba(11,59,94,0.5); border: 4px solid white; margin-bottom: 15px; color: white; }
+    .icon-book { font-size: 2.6rem; line-height: 1; }
+    .icon-graduation { font-size: 1.8rem; line-height: 1; margin-top: -6px; }
+    h2 { color: #0b3b5e; font-weight: 800; font-size: 1.8rem; text-align: center; }
+    .subhead { color: #1e5370; font-weight: 600; margin-bottom: 25px; font-size: 1rem; text-align: center; }
+    .tabs { display: flex; gap: 5px; background: #e9f0f5; border-radius: 40px; padding: 6px; margin-bottom: 28px; }
+    .tab { flex: 1; text-align: center; padding: 12px 8px; border-radius: 30px; font-weight: 700; cursor: pointer; transition: 0.2s; color: #1b6b8f; background: transparent; border: none; font-size: 0.85rem; }
+    .tab.active { background: white; box-shadow: 0 6px 15px rgba(0,0,0,0.08); color: #0b3b5e; font-weight: 800; }
+    .form-panel { display: none; flex-direction: column; gap: 18px; }
+    .form-panel.active { display: flex; }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    label { font-weight: 700; color: #0b3b5e; font-size: 0.9rem; margin-left: 6px; }
+    input, select { padding: 14px 18px; border: 2px solid #dce5ec; border-radius: 24px; font-size: 1rem; outline: none; background: white; }
+    input:focus, select:focus { border-color: #1b6b8f; box-shadow: 0 0 0 4px rgba(27,107,143,0.2); }
+    .password-wrapper { position: relative; }
+    .password-wrapper input { width: 100%; padding-right: 50px; }
+    .toggle-password { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.3rem; user-select: none; color: #7a9bb5; }
+    .toggle-password:hover { color: #1b6b8f; }
+    .btn { background: #1b6b8f; color: white; border: none; padding: 15px 25px; border-radius: 34px; font-weight: 700; font-size: 1.1rem; cursor: pointer; margin-top: 10px; box-shadow: 0 8px 18px rgba(27,107,143,0.35); text-align: center; }
+    .btn:hover { background: #0e4e6b; transform: translateY(-2px); }
+    .btn-outline { background: white; color: #1b6b8f; border: 2px solid #1b6b8f; box-shadow: none; }
+    .btn-outline:hover { background: #e6f2f9; }
+    .btn-approve { background: #2e7d32; padding: 8px 16px; font-size: 0.85rem; }
+    .btn-reject { background: #c62828; padding: 8px 16px; font-size: 0.85rem; }
+    .btn-renew { background: #f57c00; padding: 8px 16px; font-size: 0.85rem; }
+    .btn-remove { background: #c62828; padding: 8px 16px; font-size: 0.85rem; }
+    .message { padding: 12px 18px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; margin: 8px 0; display: none; text-align: center; }
+    .error-message { background: #ffebee; color: #b71c1c; border-left: 5px solid #c62828; }
+    .success-message { background: #e8f5e9; color: #1b5e20; border-left: 5px solid #2e7d32; }
+    .info-banner { background: #e3f2fd; border-radius: 20px; padding: 14px; color: #0b3b5e; font-weight: 500; margin: 15px 0; display: flex; align-items: center; gap: 12px; }
+    .copy-link-area { display: flex; gap: 8px; margin-top: 10px; }
+    .copy-link-area input { flex: 1; background: #f5f9fd; font-weight: 500; color: #0b3b5e; border: 1px solid #b8d1e0; }
+    .small-btn { padding: 10px 20px; border-radius: 30px; font-weight: 700; background: #2e7a9c; color: white; border: none; cursor: pointer; }
+    hr { margin: 20px 0 10px; border: 1px solid #d0dee8; }
+    .user-card { background: white; border-radius: 20px; padding: 15px; margin-bottom: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .user-card .info { flex: 1; min-width: 150px; }
+    .user-card .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+    .status-pending { background: #fff3e0; color: #e65100; }
+    .status-approved { background: #e8f5e9; color: #1b5e20; }
+    .status-expired { background: #ffebee; color: #b71c1c; }
+    .status-removed { background: #f3e5f5; color: #6a1b9a; }
+    .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .section-title h4 { color: #0b3b5e; margin: 0; }
+    .forgot-link { text-align: right; margin-top: -10px; margin-bottom: 10px; }
+    .forgot-link a { color: #1b6b8f; font-weight: 600; text-decoration: none; font-size: 0.85rem; cursor: pointer; }
+    .forgot-link a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="portal-container">
+  <div class="logo-section">
+    <div class="school-icon"><span class="icon-book">📚</span><span class="icon-graduation">🎓</span></div>
+    <h2>RAFIKI JUNIOR SCHOOL</h2>
+    <div class="subhead">Secure Teacher Portal · Admin Approval Required</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tabCreateAccount">➕ Register</button>
+    <button class="tab" id="tabLogin">🔐 Sign In</button>
+  </div>
+
+  <!-- Register Panel -->
+  <div class="form-panel active" id="panelCreate">
+    <div class="input-group"><label>👤 Full Name</label><input type="text" id="createName" placeholder="e.g., Mary Wanjiku"></div>
+    <div class="input-group"><label>📧 Email Address</label><input type="email" id="createEmail" placeholder="teacher@rafiki.ac.ke"></div>
+    <div class="input-group"><label>🔒 Password (min. 6 chars)</label><div class="password-wrapper"><input type="password" id="createPassword" placeholder="Min. 6 characters"><span class="toggle-password" data-target="createPassword">👁️</span></div></div>
+    <div class="input-group"><label>🔒 Confirm Password</label><div class="password-wrapper"><input type="password" id="createPasswordConfirm" placeholder="Re-enter password"><span class="toggle-password" data-target="createPasswordConfirm">👁️</span></div></div>
+    <div class="input-group"><label>📱 Phone Number</label><input type="tel" id="createPhone" placeholder="+254 7XX XXX XXX"></div>
+    <div class="input-group"><label>🎓 Subject</label><select id="createSubject"><option value="">-- Select --</option><option>Mathematics</option><option>English</option><option>Kiswahili</option><option>Integrated Science</option><option>Social Studies</option><option>Religious Education</option><option>Agriculture & Nutrition</option><option>Creative Arts & Sports</option><option>Pre Technical Studies</option><option>Other</option></select></div>
+    <button class="btn" id="createAccountBtn">📝 Request Account (Await Approval)</button>
+    <div id="createMessage" class="message"></div>
+    <div class="info-banner"><span>⏳</span> Account will be reviewed by admin.</div>
+  </div>
+
+  <!-- Login Panel -->
+  <div class="form-panel" id="panelLogin">
+    <div class="input-group"><label>📧 Registered Email</label><input type="email" id="loginEmail" placeholder="your@email.com"></div>
+    <div class="input-group"><label>🔑 Password</label><div class="password-wrapper"><input type="password" id="loginPassword" placeholder="Enter password"><span class="toggle-password" data-target="loginPassword">👁️</span></div></div>
+    <div class="forgot-link"><a id="forgotPasswordLink">🔑 Forgot Password?</a></div>
+    <button class="btn" id="loginBtn">🚪 Access My Dashboard</button>
+    <div id="loginMessage" class="message"></div>
+    <div id="reactivateContainer" style="display:none; text-align:center;"><button class="btn btn-renew" id="requestReactivationBtn">🔄 Request Reactivation</button></div>
+    <div class="info-banner"><span>🔐</span> Only approved accounts can log in. Accounts expire after 1 year.</div>
+  </div>
+
+  <!-- Admin Panel (access via #admin) -->
+  <div class="form-panel" id="panelAdmin">
+    <div class="input-group"><label>🔑 Admin Email</label><input type="email" id="adminEmail" placeholder="admin@rafikijuniorschool.com"></div>
+    <div class="input-group"><label>🔒 Admin Password</label><div class="password-wrapper"><input type="password" id="adminPassword" placeholder="Enter admin password"><span class="toggle-password" data-target="adminPassword">👁️</span></div></div>
+    <button class="btn" id="adminLoginBtn">🔓 Unlock Admin Panel</button>
+    <div id="adminLoginMessage" class="message"></div>
+    <div id="adminDashboard" style="display:none; margin-top:18px;">
+      <div class="section-title"><h4>📋 Pending Approvals</h4><span id="pendingCount" class="status-badge status-pending">0</span></div>
+      <div id="pendingList" style="max-height:250px; overflow-y:auto; background:#f9fcff; border-radius:20px; padding:8px;"></div>
+      <hr>
+      <div class="section-title"><h4>✅ Approved Teachers</h4><span id="approvedCount" class="status-badge status-approved">0</span></div>
+      <div id="approvedList" style="max-height:200px; overflow-y:auto; background:#f9fcff; border-radius:20px; padding:8px;"></div>
+      <hr>
+      <div class="section-title"><h4>⏰ Expired / Removed</h4><span id="inactiveCount" class="status-badge status-expired">0</span></div>
+      <div id="inactiveList" style="max-height:200px; overflow-y:auto; background:#f9fcff; border-radius:20px; padding:8px;"></div>
+      <hr>
+      <p style="font-weight:600; color:#0b3b5e;">📎 Shareable Registration Link</p>
+      <div class="copy-link-area"><input type="text" id="registrationLink" readonly><button class="small-btn" id="copyLinkBtn">📋 Copy</button></div>
+      <button class="btn-outline btn" style="width:100%; margin-top:20px;" id="logoutAdminBtn">🚪 Close Admin Panel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyBf2kov228TX747wps9zKNinus9T9CPWm8",
+  authDomain: "rafiki-junior-school.firebaseapp.com",
+  projectId: "rafiki-junior-school",
+  storageBucket: "rafiki-junior-school.firebasestorage.app",
+  messagingSenderId: "147986401377",
+  appId: "1:147986401377:web:31ed2d4f13005eac7d4220",
+  databaseURL: "https://rafiki-junior-school-default-rtdb.firebaseio.com"
+});
+const auth = firebase.auth();
+const rtdb = firebase.database();   // Realtime Database for teacher accounts
+
+// Eye toggles
+document.querySelectorAll('.toggle-password').forEach(eye => {
+  eye.addEventListener('click', () => {
+    const inp = document.getElementById(eye.dataset.target);
+    if (inp) { inp.type = inp.type === 'password' ? 'text' : 'password'; eye.textContent = inp.type === 'password' ? '👁️' : '🙈'; }
+  });
+});
+
+const EXPIRY_DAYS = 365;
+function isExpired(ts) { if (!ts) return false; const e = new Date(ts); e.setDate(e.getDate() + EXPIRY_DAYS); return new Date() > e; }
+
+function showMessage(id, text, ok) {
+  const el = document.getElementById(id); el.textContent = text;
+  el.className = 'message ' + (ok ? 'success-message' : 'error-message'); el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 5000);
+}
+
+// Tabs
+document.getElementById('tabCreateAccount').onclick = () => {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tabCreateAccount').classList.add('active');
+  document.getElementById('panelCreate').classList.add('active');
+};
+document.getElementById('tabLogin').onclick = () => {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tabLogin').classList.add('active');
+  document.getElementById('panelLogin').classList.add('active');
+  document.getElementById('reactivateContainer').style.display = 'none';
+};
+if (window.location.hash === '#admin') {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panelAdmin').classList.add('active');
+}
+
+// Forgot Password
+document.getElementById('forgotPasswordLink').onclick = async () => {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  if (!email) return showMessage('loginMessage', '❌ Enter your email first.');
+  try { await auth.sendPasswordResetEmail(email); showMessage('loginMessage', '✅ Reset email sent! Check inbox.', true); }
+  catch (e) { showMessage('loginMessage', '❌ ' + e.message); }
+};
+
+// ========== REGISTER (now using Realtime Database) ==========
+document.getElementById('createAccountBtn').onclick = async () => {
+  const name = document.getElementById('createName').value.trim();
+  const email = document.getElementById('createEmail').value.trim().toLowerCase();
+  const pw = document.getElementById('createPassword').value;
+  const pw2 = document.getElementById('createPasswordConfirm').value;
+  const phone = document.getElementById('createPhone').value.trim();
+  const subject = document.getElementById('createSubject').value;
+
+  if (!name || !email || !pw || !pw2 || !subject) return showMessage('createMessage', '❌ Fill all required fields.');
+  if (pw !== pw2) return showMessage('createMessage', '❌ Passwords do not match.');
+  if (pw.length < 6) return showMessage('createMessage', '❌ Minimum 6 characters.');
+  if (!email.includes('@') || !email.includes('.')) return showMessage('createMessage', '❌ Invalid email.');
+
+  const btn = document.getElementById('createAccountBtn'); btn.disabled = true; btn.textContent = '⏳ Sending…';
+  try {
+    // Check if teacher already exists in Realtime DB
+    const snap = await rtdb.ref(`teachers/${email.replace('.', ',')}`).once('value');
+    if (snap.exists()) { btn.disabled = false; btn.textContent = '📝 Request Account'; return showMessage('createMessage', '⚠️ Email already registered.'); }
+
+    // Create Auth user
+    const cred = await auth.createUserWithEmailAndPassword(email, pw);
+    const uid = cred.user.uid;
+
+    // Write teacher data to Realtime Database – this ALWAYS works with simple rules
+    await rtdb.ref(`teachers/${email.replace('.', ',')}`).set({
+      uid, name, email, phone, subject,
+      status: 'pending',
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      approvedAt: null
+    });
+
+    await auth.signOut();
+    ['createName','createEmail','createPassword','createPasswordConfirm','createPhone','createSubject'].forEach(id => document.getElementById(id).value = '');
+    showMessage('createMessage', '✅ Request submitted! Admin will review.', true);
+  } catch (e) {
+    console.error(e);
+    if (e.code === 'auth/email-already-in-use') showMessage('createMessage', '⚠️ Account exists. Use Forgot Password if needed.');
+    else showMessage('createMessage', '❌ ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = '📝 Request Account (Await Approval)';
+};
+
+// ========== LOGIN ==========
+document.getElementById('loginBtn').onclick = async () => {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pw = document.getElementById('loginPassword').value;
+  document.getElementById('reactivateContainer').style.display = 'none';
+  if (!email || !pw) return showMessage('loginMessage', '❌ Enter email and password.');
+
+  const btn = document.getElementById('loginBtn'); btn.disabled = true; btn.textContent = '⏳ Checking…';
+  try {
+    const cred = await auth.signInWithEmailAndPassword(email, pw);
+    const uid = cred.user.uid;
+
+    // Look up teacher in Realtime DB (key is email with dots replaced by commas)
+    const snap = await rtdb.ref(`teachers/${email.replace('.', ',')}`).once('value');
+    if (!snap.exists()) { await auth.signOut(); btn.disabled = false; btn.textContent = '🚪 Access Dashboard'; return showMessage('loginMessage', '❌ Account not found.'); }
+
+    const data = snap.val();
+    if (data.status === 'pending') { await auth.signOut(); btn.disabled = false; btn.textContent = '🚪 Access Dashboard'; return showMessage('loginMessage', '⏳ Pending approval.'); }
+    if (data.status === 'approved' && data.approvedAt && isExpired(data.approvedAt)) {
+      await rtdb.ref(`teachers/${email.replace('.', ',')}`).update({ status: 'expired' });
+      data.status = 'expired';
+    }
+
+    if (data.status === 'expired' || data.status === 'removed') {
+      document.getElementById('reactivateContainer').style.display = 'block';
+      btn.disabled = false; btn.textContent = '🚪 Access Dashboard';
+      return showMessage('loginMessage', data.status === 'expired' ? '⌛ Expired. Request reactivation.' : '⚠️ Removed. Request reactivation.');
+    }
+
+    sessionStorage.setItem('rafiki_user', JSON.stringify({ uid, name: data.name, email, subject: data.subject }));
+    showMessage('loginMessage', '✅ Welcome! Redirecting…', true);
+    setTimeout(() => window.location.href = 'REMS10.html', 800);
+  } catch (e) {
+    console.error(e);
+    showMessage('loginMessage', e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' ? '❌ Invalid credentials.' : '❌ ' + e.message);
+    btn.disabled = false; btn.textContent = '🚪 Access My Dashboard';
+  }
+};
+
+// Reactivation
+document.getElementById('requestReactivationBtn').onclick = async () => {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  if (!email) return;
+  const btn = document.getElementById('requestReactivationBtn'); btn.disabled = true; btn.textContent = '⏳ Sending…';
+  try {
+    await rtdb.ref(`teachers/${email.replace('.', ',')}`).update({ status: 'pending' });
+    document.getElementById('reactivateContainer').style.display = 'none';
+    showMessage('loginMessage', '✅ Request sent! Admin will review.', true);
+    setTimeout(() => auth.signOut(), 1500);
+  } catch (e) { showMessage('loginMessage', '❌ ' + e.message); }
+  btn.disabled = false; btn.textContent = '🔄 Request Reactivation';
+};
+
+// ========== ADMIN ==========
+let adminOk = false;
+document.getElementById('adminLoginBtn').onclick = async () => {
+  const email = document.getElementById('adminEmail').value.trim().toLowerCase();
+  const pw = document.getElementById('adminPassword').value;
+  if (!email || !pw) return showMessage('adminLoginMessage', 'Enter credentials.');
+  const btn = document.getElementById('adminLoginBtn'); btn.disabled = true; btn.textContent = '⏳ Authenticating…';
+  try {
+    await auth.signInWithEmailAndPassword(email, pw);
+    if (email !== 'admin@rafikijuniorschool.com') { await auth.signOut(); btn.disabled = false; btn.textContent = '🔓 Unlock Admin'; return showMessage('adminLoginMessage', '❌ Not authorized.'); }
+    adminOk = true;
+    document.getElementById('adminDashboard').style.display = 'block';
+    document.getElementById('adminLoginMessage').style.display = 'none';
+    document.getElementById('adminEmail').value = ''; document.getElementById('adminPassword').value = '';
+    refreshAdmin(); updateLink();
+  } catch (e) { showMessage('adminLoginMessage', '❌ Invalid.'); }
+  btn.disabled = false; btn.textContent = '🔓 Unlock Admin Panel';
+};
+document.getElementById('logoutAdminBtn').onclick = () => { adminOk = false; document.getElementById('adminDashboard').style.display = 'none'; auth.signOut(); };
+
+async function refreshAdmin() {
+  if (!adminOk) return;
+  const snap = await rtdb.ref('teachers').once('value');
+  const all = snap.val() || {};
+  const teachers = Object.entries(all).map(([key, val]) => ({ id: key, ...val }));
+  teachers.forEach(t => { if (t.status === 'approved' && t.approvedAt && isExpired(t.approvedAt)) { t.status = 'expired'; rtdb.ref(`teachers/${t.id}`).update({ status: 'expired' }); } });
+
+  const pending = teachers.filter(t => t.status === 'pending');
+  document.getElementById('pendingCount').textContent = pending.length + ' pending';
+  document.getElementById('pendingList').innerHTML = pending.length ? pending.map(t => `<div class="user-card"><div class="info"><strong>${t.name}</strong><br><small>📧 ${t.email} · 📚 ${t.subject}</small></div><div class="actions"><button class="btn btn-approve" data-approve="${t.id}">✅</button><button class="btn btn-reject" data-reject="${t.id}">❌</button></div></div>`).join('') : '<p style="text-align:center;color:#7a9bb5;">No pending requests.</p>';
+
+  const approved = teachers.filter(t => t.status === 'approved' && !(t.approvedAt && isExpired(t.approvedAt)));
+  document.getElementById('approvedList').innerHTML = approved.length ? approved.map(t => `<div class="user-card"><div class="info"><strong>${t.name}</strong> <span class="status-badge status-approved">Active</span><br><small>📧 ${t.email}</small></div><div class="actions"><button class="btn btn-remove" data-softremove="${t.id}">🗑️</button></div></div>`).join('') : '<p style="text-align:center;color:#7a9bb5;">No active teachers.</p>';
+
+  const inactive = teachers.filter(t => t.status === 'expired' || t.status === 'removed');
+  document.getElementById('inactiveList').innerHTML = inactive.length ? inactive.map(t => `<div class="user-card"><div class="info"><strong>${t.name}</strong> <span class="status-badge ${t.status==='expired'?'status-expired':'status-removed'}">${t.status==='expired'?'Expired':'Removed'}</span><br><small>📧 ${t.email}</small></div><div class="actions"><button class="btn btn-renew" data-renew="${t.id}">🔄</button><button class="btn btn-reject" data-delete="${t.id}">🗑️</button></div></div>`).join('') : '<p style="text-align:center;color:#7a9bb5;">No inactive accounts.</p>';
+
+  document.querySelectorAll('[data-approve]').forEach(b => b.onclick = () => approve(b.dataset.approve));
+  document.querySelectorAll('[data-reject]').forEach(b => b.onclick = () => reject(b.dataset.reject));
+  document.querySelectorAll('[data-softremove]').forEach(b => b.onclick = () => softRemove(b.dataset.softremove));
+  document.querySelectorAll('[data-renew]').forEach(b => b.onclick = () => renew(b.dataset.renew));
+  document.querySelectorAll('[data-delete]').forEach(b => b.onclick = () => del(b.dataset.delete));
+}
+
+async function approve(emailKey) { if (!confirm('Approve?')) return; await rtdb.ref(`teachers/${emailKey}`).update({ status: 'approved', approvedAt: new Date().toISOString() }); refreshAdmin(); alert('✅ Approved.'); }
+async function reject(emailKey) { if (!confirm('Reject permanently?')) return; await rtdb.ref(`teachers/${emailKey}`).remove(); refreshAdmin(); alert('❌ Rejected.'); }
+async function softRemove(emailKey) { if (!confirm('Soft remove?')) return; await rtdb.ref(`teachers/${emailKey}`).update({ status: 'removed' }); refreshAdmin(); alert('🗑️ Removed.'); }
+async function renew(emailKey) { if (!confirm('Renew?')) return; await rtdb.ref(`teachers/${emailKey}`).update({ status: 'approved', approvedAt: new Date().toISOString() }); refreshAdmin(); alert('🔄 Renewed.'); }
+async function del(emailKey) { if (!confirm('Delete forever?')) return; await rtdb.ref(`teachers/${emailKey}`).remove(); refreshAdmin(); alert('🗑️ Deleted.'); }
+
+function updateLink() { document.getElementById('registrationLink').value = location.href.split('?')[0]; }
+document.getElementById('copyLinkBtn').onclick = () => { const i = document.getElementById('registrationLink'); i.select(); document.execCommand('copy'); alert('📋 Copied!'); };
+updateLink();
+
+// Auto-redirect if already logged in
+const session = sessionStorage.getItem('rafiki_user');
+if (session) { try { const d = JSON.parse(session); if (d.uid) setTimeout(() => location.href = 'REMS10.html', 500); } catch(e) {} }
+</script>
+</body>
+</html>

@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>RAFIKI JUNIOR SCHOOL · Secure Portal</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, system-ui, sans-serif; }
+    body {
+      background: linear-gradient(145deg, #072a40 0%, #0f4b66 100%);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; margin: 0;
+    }
+    .portal-container {
+      width: 100%; max-width: 520px; background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(16px); border-radius: 40px; padding: 40px 30px;
+      box-shadow: 0 35px 70px rgba(0,0,0,0.45); transition: all 0.2s ease;
+    }
+    .logo-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 25px; }
+    .school-icon {
+      background: linear-gradient(135deg, #0b3b5e, #1b6b8f);
+      width: 100px; height: 100px; border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      box-shadow: 0 18px 30px rgba(11,59,94,0.5);
+      border: 4px solid white; margin-bottom: 15px; color: white;
+    }
+    .icon-book { font-size: 2.6rem; line-height: 1; }
+    .icon-graduation { font-size: 1.8rem; line-height: 1; margin-top: -6px; }
+    h2 { color: #0b3b5e; font-weight: 800; letter-spacing: 0.5px; font-size: 1.8rem; text-align: center; }
+    .subhead { color: #1e5370; font-weight: 600; margin-bottom: 25px; font-size: 1rem; text-align: center; }
+    .tabs { display: flex; gap: 5px; background: #e9f0f5; border-radius: 40px; padding: 6px; margin-bottom: 28px; }
+    .tab {
+      flex: 1; text-align: center; padding: 12px 8px; border-radius: 30px; font-weight: 700;
+      cursor: pointer; transition: 0.2s; color: #1b6b8f; background: transparent; border: none; font-size: 0.85rem;
+    }
+    .tab.active { background: white; box-shadow: 0 6px 15px rgba(0,0,0,0.08); color: #0b3b5e; font-weight: 800; }
+    .form-panel { display: none; flex-direction: column; gap: 18px; }
+    .form-panel.active { display: flex; }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    label { font-weight: 700; color: #0b3b5e; font-size: 0.9rem; margin-left: 6px; }
+    input, select { padding: 14px 18px; border: 2px solid #dce5ec; border-radius: 24px; font-size: 1rem; outline: none; background: white; }
+    input:focus, select:focus { border-color: #1b6b8f; box-shadow: 0 0 0 4px rgba(27,107,143,0.2); }
+    .password-wrapper { position: relative; }
+    .password-wrapper input { width: 100%; padding-right: 50px; }
+    .toggle-password {
+      position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+      cursor: pointer; font-size: 1.3rem; user-select: none; color: #7a9bb5;
+    }
+    .toggle-password:hover { color: #1b6b8f; }
+    .btn {
+      background: #1b6b8f; color: white; border: none; padding: 15px 25px; border-radius: 34px;
+      font-weight: 700; font-size: 1.1rem; cursor: pointer; margin-top: 10px;
+      box-shadow: 0 8px 18px rgba(27,107,143,0.35); text-align: center; letter-spacing: 0.4px;
+    }
+    .btn:hover { background: #0e4e6b; transform: translateY(-2px); }
+    .btn-outline { background: white; color: #1b6b8f; border: 2px solid #1b6b8f; box-shadow: none; }
+    .btn-outline:hover { background: #e6f2f9; }
+    .btn-approve { background: #2e7d32; padding: 8px 16px; font-size: 0.85rem; }
+    .btn-reject { background: #c62828; padding: 8px 16px; font-size: 0.85rem; }
+    .btn-renew { background: #f57c00; padding: 8px 16px; font-size: 0.85rem; }
+    .btn-remove { background: #c62828; padding: 8px 16px; font-size: 0.85rem; }
+    .message {
+      padding: 12px 18px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;
+      margin: 8px 0; display: none; text-align: center;
+    }
+    .error-message { background: #ffebee; color: #b71c1c; border-left: 5px solid #c62828; }
+    .success-message { background: #e8f5e9; color: #1b5e20; border-left: 5px solid #2e7d32; }
+    .info-banner {
+      background: #e3f2fd; border-radius: 20px; padding: 14px; color: #0b3b5e;
+      font-weight: 500; margin: 15px 0; display: flex; align-items: center; gap: 12px;
+    }
+    .copy-link-area { display: flex; gap: 8px; margin-top: 10px; }
+    .copy-link-area input { flex: 1; background: #f5f9fd; font-weight: 500; color: #0b3b5e; border: 1px solid #b8d1e0; }
+    .small-btn { padding: 10px 20px; border-radius: 30px; font-weight: 700; background: #2e7a9c; color: white; border: none; cursor: pointer; }
+    hr { margin: 20px 0 10px; border: 1px solid #d0dee8; }
+    .user-card {
+      background: white; border-radius: 20px; padding: 15px; margin-bottom: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 10px;
+    }
+    .user-card .info { flex: 1; min-width: 150px; }
+    .user-card .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+    .status-pending { background: #fff3e0; color: #e65100; }
+    .status-approved { background: #e8f5e9; color: #1b5e20; }
+    .status-expired { background: #ffebee; color: #b71c1c; }
+    .status-removed { background: #f3e5f5; color: #6a1b9a; }
+    .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .section-title h4 { color: #0b3b5e; margin: 0; }
+    .forgot-link {
+      text-align: right; margin-top: -10px; margin-bottom: 10px;
+    }
+    .forgot-link a {
+      color: #1b6b8f; font-weight: 600; text-decoration: none; font-size: 0.85rem; cursor: pointer;
+    }
+    .forgot-link a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="portal-container">
+  <div class="logo-section">
+    <div class="school-icon">
+      <span class="icon-book">📚</span>
+      <span class="icon-graduation">🎓</span>
+    </div>
+    <h2>RAFIKI JUNIOR SCHOOL</h2>
+    <div class="subhead">Secure Teacher Portal · Admin Approval Required</div>
+  </div>
+
+  <!-- Only two tabs visible to users: Register and Sign In -->
+  <div class="tabs">
+    <button class="tab active" id="tabCreateAccount">➕ Register</button>
+    <button class="tab" id="tabLogin">🔐 Sign In</button>
+  </div>
+
+  <!-- Register panel -->
+  <div class="form-panel active" id="panelCreate">
+    <div class="input-group"><label>👤 Full Name</label><input type="text" id="createName" placeholder="e.g., Mary Wanjiku"></div>
+    <div class="input-group"><label>📧 Email Address</label><input type="email" id="createEmail" placeholder="teacher@rafiki.ac.ke"></div>
+    <div class="input-group">
+      <label>🔒 Password (min. 6 chars)</label>
+      <div class="password-wrapper">
+        <input type="password" id="createPassword" placeholder="Min. 6 characters">
+        <span class="toggle-password" data-target="createPassword">👁️</span>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>🔒 Confirm Password</label>
+      <div class="password-wrapper">
+        <input type="password" id="createPasswordConfirm" placeholder="Re-enter password">
+        <span class="toggle-password" data-target="createPasswordConfirm">👁️</span>
+      </div>
+    </div>
+    <div class="input-group"><label>📱 Phone Number</label><input type="tel" id="createPhone" placeholder="+254 7XX XXX XXX"></div>
+    <div class="input-group">
+      <label>🎓 Subject</label>
+      <select id="createSubject">
+        <option value="">-- Select --</option>
+        <option>Mathematics</option><option>English</option><option>Kiswahili</option>
+        <option>Integrated Science</option><option>Social Studies</option><option>Religious Education</option>
+        <option>Agriculture & Nutrition</option><option>Creative Arts & Sports</option><option>Pre Technical Studies</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <button class="btn" id="createAccountBtn">📝 Request Account (Await Approval)</button>
+    <div id="createMessage" class="message"></div>
+    <div class="info-banner"><span>⏳</span> Account will be reviewed by admin.</div>
+  </div>
+
+  <!-- Login panel -->
+  <div class="form-panel" id="panelLogin">
+    <div class="input-group"><label>📧 Registered Email</label><input type="email" id="loginEmail" placeholder="your@email.com"></div>
+    <div class="input-group">
+      <label>🔑 Password</label>
+      <div class="password-wrapper">
+        <input type="password" id="loginPassword" placeholder="Enter password">
+        <span class="toggle-password" data-target="loginPassword">👁️</span>
+      </div>
+    </div>
+    <div class="forgot-link">
+      <a id="forgotPasswordLink">🔑 Forgot Password?</a>
+    </div>
+    <button class="btn" id="loginBtn">🚪 Access My Dashboard</button>
+    <div id="loginMessage" class="message"></div>
+    <div id="reactivateContainer" style="display:none; text-align:center;">
+      <button class="btn btn-renew" id="requestReactivationBtn">🔄 Request Reactivation</button>
+    </div>
+    <div class="info-banner"><span>🔐</span> Only approved accounts can log in. Accounts expire after 1 year.</div>
+  </div>
+
+  <!-- Admin panel (hidden from users, only accessible via direct URL: index.html#admin) -->
+  <div class="form-panel" id="panelAdmin">
+    <div class="input-group"><label>🔑 Admin Email</label><input type="email" id="adminEmail" placeholder="admin@rafikijuniorschool.com"></div>
+    <div class="input-group">
+      <label>🔒 Admin Password</label>
+      <div class="password-wrapper">
+        <input type="password" id="adminPassword" placeholder="Enter admin password">
+        <span class="toggle-password" data-target="adminPassword">👁️</span>
+      </div>
+    </div>
+    <button class="btn" id="adminLoginBtn">🔓 Unlock Admin Panel</button>
+    <div id="adminLoginMessage" class="message"></div>
+
+    <div id="adminDashboard" style="display:none; margin-top:18px;">
+      <div class="section-title"><h4>📋 Pending Approvals</h4><span id="pendingCount" class="status-badge status-pending">0</span></div>
+      <div id="pendingList" style="max-height:250px; overflow-y:auto; background:#f9fcff; border-radius:20px; padding:8px;"></div>
+      <hr>
+      <div class="section-title"><h4>✅ Approved Teachers</h4><span id="approvedCount" class="status-badge status-approved">0</span></div>
+      <div id="approvedList" style="max-height:200px; overflow-y:auto; background:#f9fcff; border-radius:20px; padding:8px;"></div>
+      <hr>
+      <div class="section-title"><h4>⏰ Expired / Removed</h4><span id="inactiveCount" class="status-badge status-expired">0</span></div>
+      <div id="inactiveList" style="max-height:200px; overflow-y:auto; background:#f9fcff; border-radius:20px; padding:8px;"></div>
+      <hr>
+      <p style="font-weight:600; color:#0b3b5e;">📎 Shareable Registration Link</p>
+      <div class="copy-link-area"><input type="text" id="registrationLink" readonly><button class="small-btn" id="copyLinkBtn">📋 Copy</button></div>
+      <button class="btn-outline btn" style="width:100%; margin-top:20px;" id="logoutAdminBtn">🚪 Close Admin Panel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBf2kov228TX747wps9zKNinus9T9CPWm8",
+    authDomain: "rafiki-junior-school.firebaseapp.com",
+    projectId: "rafiki-junior-school",
+    storageBucket: "rafiki-junior-school.firebasestorage.app",
+    messagingSenderId: "147986401377",
+    appId: "1:147986401377:web:31ed2d4f13005eac7d4220"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // Eye toggle for password fields
+  document.querySelectorAll('.toggle-password').forEach(eye => {
+    eye.addEventListener('click', () => {
+      const input = document.getElementById(eye.dataset.target);
+      if (input) {
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        eye.textContent = isPassword ? '🙈' : '👁️';
+      }
+    });
+  });
+
+  const ACCOUNT_EXPIRY_DAYS = 365;
+
+  function isExpired(approvedAt) {
+    if (!approvedAt) return false;
+    const expiry = approvedAt.toDate();
+    expiry.setDate(expiry.getDate() + ACCOUNT_EXPIRY_DAYS);
+    return new Date() > expiry;
+  }
+
+  function showMessage(elId, text, success = false) {
+    const el = document.getElementById(elId);
+    el.textContent = text;
+    el.className = 'message ' + (success ? 'success-message' : 'error-message');
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 5000);
+  }
+
+  // Tab switching (only Register and Sign In for users)
+  document.getElementById('tabCreateAccount').addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tabCreateAccount').classList.add('active');
+    document.getElementById('panelCreate').classList.add('active');
+  });
+  document.getElementById('tabLogin').addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tabLogin').classList.add('active');
+    document.getElementById('panelLogin').classList.add('active');
+    document.getElementById('reactivateContainer').style.display = 'none';
+  });
+
+  // Admin panel access via URL hash (#admin)
+  if (window.location.hash === '#admin') {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panelAdmin').classList.add('active');
+  }
+
+  // ========== Forgot Password ==========
+  document.getElementById('forgotPasswordLink').addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    if (!email) return showMessage('loginMessage', '❌ Enter your email first.');
+    try {
+      await auth.sendPasswordResetEmail(email);
+      showMessage('loginMessage', '✅ Password reset email sent! Check your inbox.', true);
+    } catch (err) {
+      console.error(err);
+      if (err.code === 'auth/user-not-found') {
+        showMessage('loginMessage', '❌ No account found with this email.');
+      } else {
+        showMessage('loginMessage', '❌ Error: ' + err.message);
+      }
+    }
+  });
+
+  // ========== Register ==========
+  document.getElementById('createAccountBtn').addEventListener('click', async () => {
+    const name = document.getElementById('createName').value.trim();
+    const email = document.getElementById('createEmail').value.trim().toLowerCase();
+    const password = document.getElementById('createPassword').value;
+    const passwordConfirm = document.getElementById('createPasswordConfirm').value;
+    const phone = document.getElementById('createPhone').value.trim();
+    const subject = document.getElementById('createSubject').value;
+
+    if (!name || !email || !password || !passwordConfirm || !subject) {
+      return showMessage('createMessage', '❌ All fields except phone are required.');
+    }
+    if (password !== passwordConfirm) {
+      return showMessage('createMessage', '❌ Passwords do not match.');
+    }
+    if (password.length < 6) return showMessage('createMessage', 'Password must be at least 6 characters.');
+    if (!email.includes('@') || !email.includes('.')) return showMessage('createMessage', 'Invalid email address.');
+
+    const btn = document.getElementById('createAccountBtn');
+    btn.disabled = true; btn.textContent = '⏳ Sending request...';
+
+    try {
+      const existingDoc = await db.collection('teachers').doc(email).get();
+      if (existingDoc.exists) {
+        btn.disabled = false; btn.textContent = '📝 Request Account (Await Approval)';
+        return showMessage('createMessage', '⚠️ This email is already registered. Try logging in or contact admin.');
+      }
+
+      const userCred = await auth.createUserWithEmailAndPassword(email, password);
+      const uid = userCred.user.uid;
+
+      await db.collection('teachers').doc(email).set({
+        uid, name, email, phone, subject,
+        status: 'pending',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        approvedAt: null
+      });
+
+      await auth.signOut();
+      document.getElementById('createName').value = '';
+      document.getElementById('createEmail').value = '';
+      document.getElementById('createPassword').value = '';
+      document.getElementById('createPasswordConfirm').value = '';
+      document.getElementById('createPhone').value = '';
+      document.getElementById('createSubject').value = '';
+      showMessage('createMessage', '✅ Request submitted! Admin will review.', true);
+    } catch (err) {
+      console.error(err);
+      if (err.code === 'auth/email-already-in-use') {
+        showMessage('createMessage', '⚠️ This email already has an authentication account. If you were removed, use reactivation on the login page.');
+      } else {
+        showMessage('createMessage', '❌ Error: ' + err.message);
+      }
+    } finally {
+      btn.disabled = false; btn.textContent = '📝 Request Account (Await Approval)';
+    }
+  });
+
+  // ========== Login ==========
+  document.getElementById('loginBtn').addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    const password = document.getElementById('loginPassword').value;
+    document.getElementById('reactivateContainer').style.display = 'none';
+    if (!email || !password) return showMessage('loginMessage', 'Enter email and password.');
+
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true; btn.textContent = '⏳ Checking...';
+
+    try {
+      const userCred = await auth.signInWithEmailAndPassword(email, password);
+      const uid = userCred.user.uid;
+
+      let doc = await db.collection('teachers').doc(email).get();
+
+      if (!doc.exists) {
+        const qSnap = await db.collection('teachers').where('uid', '==', uid).limit(1).get();
+        if (!qSnap.empty) {
+          const oldDoc = qSnap.docs[0];
+          await db.collection('teachers').doc(email).set(oldDoc.data());
+          doc = await db.collection('teachers').doc(email).get();
+        }
+      }
+
+      if (!doc.exists) {
+        await auth.signOut();
+        btn.disabled = false; btn.textContent = '🚪 Access My Dashboard';
+        return showMessage('loginMessage', '❌ Account not found. Please register first.');
+      }
+
+      const data = doc.data();
+      if (data.status === 'pending') {
+        await auth.signOut();
+        btn.disabled = false; btn.textContent = '🚪 Access My Dashboard';
+        return showMessage('loginMessage', '⏳ Account pending approval.');
+      }
+
+      if (data.status === 'approved') {
+        if (data.approvedAt && isExpired(data.approvedAt)) {
+          await db.collection('teachers').doc(email).update({ status: 'expired' });
+          await auth.signOut();
+          btn.disabled = false; btn.textContent = '🚪 Access My Dashboard';
+          return showMessage('loginMessage', '⌛ Account expired. Contact admin.');
+        }
+      } else if (data.status === 'expired') {
+        await auth.signOut();
+        btn.disabled = false; btn.textContent = '🚪 Access My Dashboard';
+        document.getElementById('reactivateContainer').style.display = 'block';
+        return showMessage('loginMessage', '⌛ Account expired. You can request reactivation below.');
+      } else if (data.status === 'removed') {
+        await auth.signOut();
+        btn.disabled = false; btn.textContent = '🚪 Access My Dashboard';
+        document.getElementById('reactivateContainer').style.display = 'block';
+        return showMessage('loginMessage', '⚠️ Your account has been removed. You can request reactivation below.');
+      }
+
+      sessionStorage.setItem('rafiki_user', JSON.stringify({
+        uid, name: data.name, email, subject: data.subject
+      }));
+      showMessage('loginMessage', '✅ Login successful! Redirecting...', true);
+      setTimeout(() => window.location.href = 'REMS10.html', 1000);
+    } catch (err) {
+      console.error(err);
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        showMessage('loginMessage', '❌ Invalid email or password.');
+      } else if (err.code === 'auth/invalid-credential') {
+        showMessage('loginMessage', '❌ Session expired. Please log in again.');
+      } else {
+        showMessage('loginMessage', '❌ Error: ' + err.message);
+      }
+      btn.disabled = false; btn.textContent = '🚪 Access My Dashboard';
+    }
+  });
+
+  document.getElementById('requestReactivationBtn').addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    if (!email) return;
+    const btn = document.getElementById('requestReactivationBtn');
+    btn.disabled = true; btn.textContent = '⏳ Sending...';
+    try {
+      await db.collection('teachers').doc(email).update({ status: 'pending' });
+      document.getElementById('reactivateContainer').style.display = 'none';
+      showMessage('loginMessage', '✅ Reactivation request sent! Admin will review.', true);
+    } catch (err) {
+      console.error(err);
+      showMessage('loginMessage', '❌ Failed to send request: ' + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = '🔄 Request Reactivation';
+    }
+  });
+
+  // ========== Admin ==========
+  let adminLoggedIn = false;
+
+  document.getElementById('adminLoginBtn').addEventListener('click', async () => {
+    const email = document.getElementById('adminEmail').value.trim().toLowerCase();
+    const password = document.getElementById('adminPassword').value;
+    if (!email || !password) return showMessage('adminLoginMessage', 'Enter admin credentials.');
+
+    const btn = document.getElementById('adminLoginBtn');
+    btn.disabled = true; btn.textContent = '⏳ Authenticating...';
+
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      if (email !== 'admin@rafikijuniorschool.com') {
+        await auth.signOut();
+        btn.disabled = false; btn.textContent = '🔓 Unlock Admin Panel';
+        return showMessage('adminLoginMessage', '❌ Not authorized as admin.');
+      }
+
+      adminLoggedIn = true;
+      document.getElementById('adminDashboard').style.display = 'block';
+      document.getElementById('adminLoginMessage').style.display = 'none';
+      document.getElementById('adminEmail').value = '';
+      document.getElementById('adminPassword').value = '';
+
+      await migrateTeacherDocs();
+      refreshAdminPanels();
+      updateRegistrationLink();
+    } catch (err) {
+      console.error(err);
+      showMessage('adminLoginMessage', '❌ Invalid credentials.');
+    } finally {
+      btn.disabled = false; btn.textContent = '🔓 Unlock Admin Panel';
+    }
+  });
+
+  document.getElementById('logoutAdminBtn').addEventListener('click', () => {
+    adminLoggedIn = false;
+    document.getElementById('adminDashboard').style.display = 'none';
+    auth.signOut();
+  });
+
+  async function migrateTeacherDocs() {
+    const snapshot = await db.collection('teachers').get();
+    const batch = db.batch();
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.email && doc.id !== data.email) {
+        batch.set(db.collection('teachers').doc(data.email), data, { merge: true });
+      }
+    });
+    await batch.commit();
+  }
+
+  async function refreshAdminPanels() {
+    if (!adminLoggedIn) return;
+    const snapshot = await db.collection('teachers').get();
+    const teachers = [];
+    snapshot.forEach(doc => teachers.push({ id: doc.id, ...doc.data() }));
+
+    teachers.forEach(t => {
+      if (t.status === 'approved' && t.approvedAt && isExpired(t.approvedAt)) {
+        t.status = 'expired';
+        db.collection('teachers').doc(t.id).update({ status: 'expired' });
+      }
+    });
+
+    const pending = teachers.filter(t => t.status === 'pending');
+    document.getElementById('pendingCount').textContent = pending.length + ' pending';
+    document.getElementById('pendingList').innerHTML = pending.length === 0
+      ? '<p style="color:#7a9bb5; text-align:center; padding:20px;">✅ No pending requests.</p>'
+      : pending.map(t => `
+        <div class="user-card">
+          <div class="info"><strong>${t.name}</strong><br><small>📧 ${t.email} · 📚 ${t.subject}</small></div>
+          <div class="actions">
+            <button class="btn btn-approve" data-approve="${t.id}">✅ Approve</button>
+            <button class="btn btn-reject" data-reject="${t.id}">❌ Reject</button>
+          </div>
+        </div>
+      `).join('');
+
+    const approved = teachers.filter(t => t.status === 'approved' && !(t.approvedAt && isExpired(t.approvedAt)));
+    document.getElementById('approvedCount').textContent = approved.length + ' active';
+    document.getElementById('approvedList').innerHTML = approved.length === 0
+      ? '<p style="color:#7a9bb5; text-align:center; padding:20px;">No approved teachers.</p>'
+      : approved.map(t => {
+          const daysLeft = t.approvedAt
+            ? Math.ceil((t.approvedAt.toDate().getTime() + ACCOUNT_EXPIRY_DAYS*86400000 - Date.now()) / 86400000)
+            : 0;
+          return `
+          <div class="user-card">
+            <div class="info"><strong>${t.name}</strong> <span class="status-badge status-approved">Active</span><br>
+              <small>📧 ${t.email} · 📚 ${t.subject}</small><br><small>⏳ ${daysLeft} days</small></div>
+            <div class="actions"><button class="btn btn-remove" data-softremove="${t.id}">🗑️ Remove</button></div>
+          </div>`;
+        }).join('');
+
+    const inactive = teachers.filter(t => t.status === 'expired' || t.status === 'removed');
+    document.getElementById('inactiveCount').textContent = inactive.length + ' inactive';
+    document.getElementById('inactiveList').innerHTML = inactive.length === 0
+      ? '<p style="color:#7a9bb5; text-align:center; padding:20px;">✅ No expired or removed accounts.</p>'
+      : inactive.map(t => `
+        <div class="user-card">
+          <div class="info"><strong>${t.name}</strong> <span class="status-badge ${t.status==='expired'?'status-expired':'status-removed'}">${t.status==='expired'?'Expired':'Removed'}</span><br>
+            <small>📧 ${t.email} · 📚 ${t.subject}</small></div>
+          <div class="actions">
+            <button class="btn btn-renew" data-renew="${t.id}">🔄 Reactivate</button>
+            <button class="btn btn-reject" data-delete="${t.id}">🗑️ Delete</button>
+          </div>
+        </div>
+      `).join('');
+
+    document.querySelectorAll('[data-approve]').forEach(b => b.addEventListener('click', () => approveTeacher(b.dataset.approve)));
+    document.querySelectorAll('[data-reject]').forEach(b => b.addEventListener('click', () => rejectTeacher(b.dataset.reject)));
+    document.querySelectorAll('[data-softremove]').forEach(b => b.addEventListener('click', () => softRemoveTeacher(b.dataset.softremove)));
+    document.querySelectorAll('[data-renew]').forEach(b => b.addEventListener('click', () => reactivateTeacher(b.dataset.renew)));
+    document.querySelectorAll('[data-delete]').forEach(b => b.addEventListener('click', () => deletePermanently(b.dataset.delete)));
+  }
+
+  async function approveTeacher(email) {
+    if (!confirm('Approve this teacher?')) return;
+    try {
+      await db.collection('teachers').doc(email).update({
+        status: 'approved',
+        approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      refreshAdminPanels();
+      alert('✅ Teacher approved!');
+    } catch (err) { alert('❌ Error: ' + err.message); }
+  }
+
+  async function rejectTeacher(email) {
+    if (!confirm('Reject and permanently delete this teacher?')) return;
+    try {
+      await db.collection('teachers').doc(email).delete();
+      refreshAdminPanels();
+      alert('❌ Teacher rejected and deleted.');
+    } catch (err) { alert('❌ Error: ' + err.message); }
+  }
+
+  async function softRemoveTeacher(email) {
+    if (!confirm('Remove this teacher? They will be deactivated but can request reactivation.')) return;
+    try {
+      await db.collection('teachers').doc(email).update({ status: 'removed' });
+      refreshAdminPanels();
+      alert('🗑️ Teacher removed. Their account is now inactive.');
+    } catch (err) { alert('❌ Error: ' + err.message); }
+  }
+
+  async function reactivateTeacher(email) {
+    if (!confirm('Reactivate this teacher? They will regain access.')) return;
+    try {
+      await db.collection('teachers').doc(email).update({
+        status: 'approved',
+        approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      refreshAdminPanels();
+      alert('🔄 Teacher reactivated!');
+    } catch (err) { alert('❌ Error: ' + err.message); }
+  }
+
+  async function deletePermanently(email) {
+    if (!confirm('Permanently delete this teacher? This cannot be undone.')) return;
+    try {
+      await db.collection('teachers').doc(email).delete();
+      refreshAdminPanels();
+      alert('🗑️ Teacher permanently deleted.');
+    } catch (err) { alert('❌ Error: ' + err.message); }
+  }
+
+  function updateRegistrationLink() {
+    document.getElementById('registrationLink').value = window.location.href.split('?')[0];
+  }
+
+  document.getElementById('copyLinkBtn').addEventListener('click', () => {
+    const inp = document.getElementById('registrationLink');
+    inp.select();
+    document.execCommand('copy');
+    alert('📋 Link copied!');
+  });
+
+  updateRegistrationLink();
+
+  const session = sessionStorage.getItem('rafiki_user');
+  if (session) {
+    try {
+      const data = JSON.parse(session);
+      if (data.uid) setTimeout(() => window.location.href = 'REMS10.html', 500);
+    } catch(e) {}
+  }
+</script>
+</body>
+</html>
